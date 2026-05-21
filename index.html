@@ -4,17 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>OPR az=R | SK Pendidikan Khas Kuantan</title>
-
-  <!-- ===== PWA ===== -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="OPR">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <style>
     /* ===================== PEMBOLEHUBAH TEMA ===================== */
     :root {
@@ -1991,17 +1980,6 @@
     }).catch(e => { hideLoading(); alert('Ralat: ' + e); });
   }
 
-</script>
-
-<!-- ===== PWA Service Worker ===== -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/opr/sw.js', { scope: '/opr/' })
-        .then(reg => console.log('[OPR PWA] SW registered, scope:', reg.scope))
-        .catch(err => console.warn('[OPR PWA] SW failed:', err));
-    });
-  }
 </script>
 </body>
 </html>
