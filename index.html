@@ -479,31 +479,6 @@
   </div>
 </div>
 
-<!-- MODAL API KEY GROQ -->
-<div id="modalApiKey" class="modal-overlay">
-  <div class="modal-content" style="max-width:420px;">
-    <h3 style="margin-top:0; color:#7c3aed;">🔑 Tetapan API Key Groq AI</h3>
-    <p style="font-size:13px; color:#374151; margin:0 0 12px;">
-      API key disimpan di <strong>peranti ini sahaja</strong> (localStorage). Tidak dihantar ke mana-mana pelayan lain.
-    </p>
-    <div style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:8px; padding:10px; font-size:12px; color:#5b21b6; margin-bottom:14px;">
-      Dapatkan API key percuma di <strong>console.groq.com</strong> → Create API Key
-    </div>
-    <div class="form-group" style="margin-bottom:14px;">
-      <label>Groq API Key</label>
-      <input type="password" id="inputGroqApiKey" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" style="font-family:monospace; font-size:13px; letter-spacing:1px;">
-    </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn" style="flex:1; background:#7c3aed; color:white;" onclick="saveApiKey()">💾 Simpan Key</button>
-      <button class="btn" style="background:#fee2e2; color:#dc2626; padding:12px;" onclick="clearApiKey()" title="Padam key dari peranti">🗑️</button>
-      <button class="btn" style="background:#e5e7eb; color:#333; padding:12px;" onclick="closeModal('modalApiKey')">✕</button>
-    </div>
-    <p style="font-size:11px; color:#9ca3af; margin:10px 0 0; text-align:center;">
-      Key disimpan dalam peranti ini sahaja. Tukar peranti = masukkan semula.
-    </p>
-  </div>
-</div>
-
 <!-- ===================== LAYOUT UTAMA ===================== -->
 <div class="main-layout">
 
@@ -566,12 +541,6 @@
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
           <div class="ai-hint" style="flex:1;">
             ✨ <span>Isi <strong>Objektif</strong> &amp; <strong>Aktiviti</strong> dahulu, kemudian jana dengan AI</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span id="aiKeyBadge" style="display:none; align-items:center; gap:3px; background:#d1fae5; color:#065f46; font-size:11px; font-weight:bold; padding:3px 8px; border-radius:12px; border:1px solid #6ee7b7;">
-              <span id="aiKeyBadgeText">Key ✓</span>
-            </span>
-            <button onclick="openApiKeyModal()" style="background:#ede9fe; border:1px solid #c4b5fd; color:#5b21b6; border-radius:6px; padding:5px 10px; font-size:11px; font-weight:bold; cursor:pointer;" title="Tetapkan API Key Groq">🔑 API Key</button>
           </div>
         </div>
         <button class="btn-ai" id="btnGroqAI" onclick="generateAI()">
@@ -917,7 +886,6 @@
     renderA4PhotoGrid();
     loadHeaderSettingsOnStart();
     initDisahkanToggle();
-    initAiKeyBadge();
 
     // Muat senarai background dan unit dari API
     callApi('getBackgroundList').then(res => {
@@ -1391,48 +1359,11 @@
   }
 
   // =========================================================================
-  // 🤖 GROQ AI — Key diambil dari AppScript Script Properties (1 key semua user)
-  // Fallback: localStorage (jika AppScript tidak ada key, user boleh set sendiri)
-  //
-  // Flow: callApi('getGroqApiKey') → dapat key → panggil Groq dari browser
-  // PropertiesService tidak guna UrlFetchApp → selamat untuk Workspace sekolah
+  // 🤖 GROQ AI — Diproses SEPENUHNYA di server (Apps Script)
+  // Browser tidak pernah nampak API key. Flow:
+  // Browser → callApi('generateAI', {data}) → Apps Script (ada GROQ_API_KEY
+  // dalam Script Properties) → Groq API → hasil balik ke browser.
   // =========================================================================
-
-  // Buka modal untuk urus API key Groq (fallback manual)
-  function openApiKeyModal() {
-    const current = localStorage.getItem('groq_api_key') || '';
-    document.getElementById('inputGroqApiKey').value = current;
-    document.getElementById('modalApiKey').style.display = 'flex';
-  }
-
-  function saveApiKey() {
-    const val = document.getElementById('inputGroqApiKey').value.trim();
-    if (!val) return alert('Sila masukkan API key.');
-    localStorage.setItem('groq_api_key', val);
-    closeModal('modalApiKey');
-    document.getElementById('aiKeyBadge').style.display = 'inline-flex';
-    document.getElementById('aiKeyBadgeText').textContent = 'Key ✓ (Tempatan)';
-  }
-
-  function clearApiKey() {
-    if (!confirm('Padam API key tempatan dari peranti ini?')) return;
-    localStorage.removeItem('groq_api_key');
-    document.getElementById('inputGroqApiKey').value = '';
-    document.getElementById('aiKeyBadge').style.display = 'none';
-    closeModal('modalApiKey');
-  }
-
-  function initAiKeyBadge() {
-    const key = localStorage.getItem('groq_api_key');
-    const badge = document.getElementById('aiKeyBadge');
-    if (key && badge) {
-      badge.style.display = 'inline-flex';
-      document.getElementById('aiKeyBadgeText').textContent = 'Key ✓ (Tempatan)';
-    }
-  }
-
-  // API Key Groq — dipanggil terus dari browser (GAS tidak digunakan untuk AI)
-  const GROQ_API_KEY = atob('Z3NrX3g1bTJyVnNEM3d4anpzSzVrcU9qV0dkeWIzRllCSk05YTM0R21pSlpLZEN6ckxmQnFvV0s=');
 
   function generateAI() {
     const objektif = document.getElementById('inputObjektif').value.trim();
@@ -1502,94 +1433,24 @@
       aktiviti: aktiviti
     };
 
-    // Panggil Groq terus dari browser — bypass GAS sepenuhnya
-    const badge = document.getElementById('aiKeyBadge');
-    if (badge) {
-      badge.style.display = 'inline-flex';
-      document.getElementById('aiKeyBadgeText').textContent = 'Key ✓';
-    }
+    // Panggil Apps Script — AI diproses & key kekal 100% di server
     btn.innerHTML = '⏳ AI sedang menjana...';
-    _callGroqFromBrowser(GROQ_API_KEY, formData, resetBtn, applyResults);
-  }
-
-  async function _callGroqFromBrowser(apiKey, data, resetBtn, applyResults) {
-    const prompt =
-      'Anda adalah pembantu penulisan laporan program sekolah yang berfokus kepada analisis yang realistik dan kontekstual dalam Bahasa Melayu formal.\n\n' +
-      'Maklumat program:\n' +
-      '- Unit/Kategori   : ' + (data.unit     || '(tiada maklumat)') + '\n' +
-      '- Nama Program    : ' + (data.nama     || '(tiada maklumat)') + '\n' +
-      '- Hari            : ' + (data.hari     || '(tiada maklumat)') + '\n' +
-      '- Tarikh          : ' + (data.tarikh   || '(tiada maklumat)') + '\n' +
-      '- Masa            : ' + (data.masa     || '(tiada maklumat)') + '\n' +
-      '- Tempat          : ' + (data.tempat   || '(tiada maklumat)') + '\n' +
-      '- Kumpulan Sasaran: ' + (data.sasaran  || '(tiada maklumat)') + '\n' +
-      '- Objektif Program: ' + (data.objektif || '(tiada maklumat)') + '\n' +
-      '- Aktiviti        : ' + (data.aktiviti || '(tiada maklumat)') + '\n\n' +
-      'ARAHAN PENTING:\n' +
-      '1. Analisis mesti berdasarkan kandungan AKTIVITI dan OBJEKTIF, bukan ayat umum.\n' +
-      '2. Jika terdapat elemen seperti "ibu bapa", "penjaga", "waris" atau "PIBG" dalam aktiviti, masukkan aspek penglibatan ibu bapa.\n' +
-      '3. Jika tiada elemen tersebut, JANGAN sebut tentang ibu bapa atau komuniti.\n' +
-      '4. Elakkan ayat klise tanpa sebab khusus.\n\n' +
-      'OUTPUT — format JSON SAHAJA:\n' +
-      '{"kekuatan":"...","kelemahan":"...","penambahbaikan":"..."}\n\n' +
-      'PANDUAN:\n' +
-      '- Setiap bahagian TEPAT 2 point: "1. [ayat]\\n2. [ayat]"\n' +
-      '- Setiap point satu ayat pendek (≤20 patah perkataan).\n' +
-      '- Bahasa Melayu formal.';
-
-    try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: 'Anda pembantu penulisan laporan sekolah. Balas HANYA JSON sah. Tiada markdown.' },
-            { role: 'user',   content: prompt }
-          ],
-          temperature: 0.65,
-          max_tokens: 900,
-          response_format: { type: 'json_object' }
-        })
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        resetBtn();
-        const errMsg = (json && json.error && json.error.message) ? json.error.message : 'HTTP ' + response.status;
-        // Key tidak sah — padam dari localStorage
-        if (response.status === 401) {
-          localStorage.removeItem('groq_api_key');
-          document.getElementById('aiKeyBadge').style.display = 'none';
-          alert('❌ API key tidak sah atau tamat tempoh.\n\nKey telah dipadam. Sila masukkan key baru.');
-        } else {
-          alert('❌ Ralat Groq API: ' + errMsg);
-        }
+    callApi('generateAI', { data: formData }).then(res => {
+      resetBtn();
+      if (!res || res.success !== true) {
+        const errMsg = (res && res.error) ? res.error : 'Ralat tidak diketahui.';
+        alert('❌ Ralat AI: ' + errMsg);
         return;
       }
-
-      let content = json.choices[0].message.content.trim();
-      content = content.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
-
-      let result;
-      try { result = JSON.parse(content); }
-      catch (pe) { resetBtn(); alert('❌ Ralat format respons AI. Sila cuba lagi.'); return; }
-
-      resetBtn();
       applyResults({
-        kekuatan:       result.kekuatan       || '',
-        kelemahan:      result.kelemahan      || '',
-        penambahbaikan: result.penambahbaikan || ''
+        kekuatan:       res.kekuatan       || '',
+        kelemahan:      res.kelemahan      || '',
+        penambahbaikan: res.penambahbaikan || ''
       });
-
-    } catch (err) {
+    }).catch(err => {
       resetBtn();
-      alert('❌ Ralat sambungan ke Groq API: ' + err.message);
-    }
+      alert('❌ Ralat sambungan ke pelayan: ' + err.message);
+    });
   }
 
   // =========================================================================
